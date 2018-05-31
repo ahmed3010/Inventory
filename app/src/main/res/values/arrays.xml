@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="menu">
+        <item>@string/edit</item>
+        <item>@string/delete</item>
+    </array>
+    <array name="units">
+        <item>Milligram</item>
+        <item>Gram</item>
+        <item>Kilogram</item>
+        <item>Milliliter</item>
+        <item>Liters</item>
+    </array>
+</resources>
