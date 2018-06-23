@@ -21,6 +21,7 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.util.Log;
 
@@ -48,6 +49,38 @@ public class InventoryProvider extends ContentProvider {
 
     private static final int TRANSACTIONS = 300;
     private static final int TRANSACTIONS_ID = 301;
+    private static final int TRANSACTIONS_BY_CLIENT_ID = 302;
+    private static final int TRANSACTIONS_BY_PRODUCT_ID = 303;
+
+    private static final String transactionSelectionByProduct =
+            InventoryContract.ProductEntry.TABLE_NAME +
+                    "." + ProductEntry._ID + " = ?";
+
+    private static final String transactionSelectionByClient =
+            InventoryContract.ClientsEntry.TABLE_NAME +
+                    "." + ClientsEntry._ID + " = ?";
+
+
+    private static final SQLiteQueryBuilder transactionsQueryBuilder;
+
+    static {
+        transactionsQueryBuilder = new SQLiteQueryBuilder();
+
+        //This is an inner join which looks like
+        //weather INNER JOIN location ON weather.location_id = location._id
+        transactionsQueryBuilder.setTables(
+                InventoryContract.TransactionEntry.TABLE_NAME + " INNER JOIN " +
+                        InventoryContract.ClientsEntry.TABLE_NAME +
+                        " ON " + InventoryContract.TransactionEntry.TABLE_NAME +
+                        "." + TransactionEntry.COLUMN_TRANSACTIONS_CLIENT_ID +
+                        " = " + InventoryContract.ClientsEntry.TABLE_NAME +
+                        "." + InventoryContract.ClientsEntry._ID + " INNER JOIN " +
+                        InventoryContract.ProductEntry.TABLE_NAME +
+                        " ON " + InventoryContract.TransactionEntry.TABLE_NAME +
+                        "." + TransactionEntry.COLUMN_TRANSACTIONS_PRODUCT_ID +
+                        " = " + InventoryContract.ProductEntry.TABLE_NAME +
+                        "." + InventoryContract.ProductEntry._ID);
+    }
 
     /**
      * UriMatcher object to match a content URI to a corresponding code.
@@ -65,6 +98,8 @@ public class InventoryProvider extends ContentProvider {
         sUriMatcher.addURI(CONTENT_AUTHORITY, PATH_PRODUCT + "/#", PRODUCT_ID);
         sUriMatcher.addURI(CONTENT_AUTHORITY, PATH_TRANSACTIONS, TRANSACTIONS);
         sUriMatcher.addURI(CONTENT_AUTHORITY, PATH_TRANSACTIONS + "/#", TRANSACTIONS_ID);
+        sUriMatcher.addURI(CONTENT_AUTHORITY, PATH_TRANSACTIONS + "/" + PATH_PRODUCT + "/#", TRANSACTIONS_BY_PRODUCT_ID);
+        sUriMatcher.addURI(CONTENT_AUTHORITY, PATH_TRANSACTIONS + "/" + PATH_CLIENTS + "/#", TRANSACTIONS_BY_CLIENT_ID);
 
     }
 
@@ -110,7 +145,7 @@ public class InventoryProvider extends ContentProvider {
                 break;
 
             case TRANSACTIONS:
-                cursor = database.query(TransactionEntry.TABLE_NAME, projection, selection, selectionArgs,
+                cursor = transactionsQueryBuilder.query(database, projection, selection, selectionArgs,
                         null, null, sortOrder);
                 break;
             case TRANSACTIONS_ID:
@@ -118,6 +153,15 @@ public class InventoryProvider extends ContentProvider {
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
                 cursor = database.query(TransactionEntry.TABLE_NAME, projection, selection, selectionArgs,
                         null, null, sortOrder);
+                break;
+
+            case TRANSACTIONS_BY_CLIENT_ID:
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
+                cursor = transactionsQueryBuilder.query(database, projection, transactionSelectionByClient, selectionArgs, null, null, sortOrder);
+                break;
+            case TRANSACTIONS_BY_PRODUCT_ID:
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
+                cursor = transactionsQueryBuilder.query(database, projection, transactionSelectionByProduct, selectionArgs, null, null, sortOrder);
                 break;
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
@@ -306,7 +350,7 @@ public class InventoryProvider extends ContentProvider {
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
         int rowsUpdated = database.update(ClientsEntry.TABLE_NAME, values, selection, selectionArgs);
-        if (rowsUpdated != 0){
+        if (rowsUpdated != 0) {
             getContext().getContentResolver().notifyChange(uri, null);
         }
         return rowsUpdated;

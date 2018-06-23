@@ -81,13 +81,7 @@ public class ProductAdapter extends CursorAdapter {
                         dialog.dismiss();
                     }
                 });
-//                Bitmap icon = BitmapFactory.decodeFile(imageUri);
-//
-//                if (icon != null) {
-//                    dialogImage.setImageBitmap(icon);
-//                }
                 setPic(imageUri, dialogImage);
-
                 dialog.show();
             }
         });

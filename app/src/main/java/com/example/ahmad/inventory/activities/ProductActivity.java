@@ -156,6 +156,14 @@ public class ProductActivity extends AppCompatActivity implements LoaderManager.
             adapter.swapCursor(data);
         }
         listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(ProductActivity.this, TransactionsActivity.class);
+                intent.setData(InventoryContract.TransactionEntry.getTransactionByProduct(id));
+                startActivity(intent);
+            }
+        });
     }
 
     @Override

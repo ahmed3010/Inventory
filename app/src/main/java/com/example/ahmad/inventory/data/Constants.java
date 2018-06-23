@@ -1,6 +1,7 @@
 package com.example.ahmad.inventory.data;
 
 public class Constants {
+    public static final String INTENT_ACTIVITY_KEY = "activity";
     public static final String CLIENT_NAME = "client-name";
     public static final String CLIENT_ADDRESS = "client-address";
     public static final String CLIENT_PHONE_NUMBER = "client-phone-number";
